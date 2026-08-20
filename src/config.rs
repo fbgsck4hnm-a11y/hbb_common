@@ -79,41 +79,17 @@ lazy_static::lazy_static! {
     pub static ref OVERWRITE_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref OVERWRITE_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
-    pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
+    pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), PRESET_PASSWORD.to_owned())]));
     pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
 }
 
-pub fn inject_builtin_defaults() {
-    let mut local = DEFAULT_LOCAL_SETTINGS.write().unwrap();
-    local
-        .entry(keys::OPTION_ENABLE_UDP_PUNCH.to_owned())
-        .or_insert_with(|| "Y".to_owned());
-    local
-        .entry(keys::OPTION_ENABLE_IPV6_PUNCH.to_owned())
-        .or_insert_with(|| "Y".to_owned());
-    local
-        .entry(keys::OPTION_ALLOW_D3D_RENDER.to_owned())
-        .or_insert_with(|| "Y".to_owned());
-    local
-        .entry(keys::OPTION_ENABLE_OPEN_NEW_CONNECTIONS_IN_TABS.to_owned())
-        .or_insert_with(|| "N".to_owned());
-    local
-        .entry(keys::OPTION_ENABLE_CHECK_UPDATE.to_owned())
-        .or_insert_with(|| "N".to_owned());
-    local
-        .entry(keys::OPTION_FLUTTER_PEER_CARD_UI_TYLE.to_owned())
-        .or_insert_with(|| "1".to_owned());
-    drop(local);
-
-    let mut server = DEFAULT_SETTINGS.write().unwrap();
-    server
-        .entry(keys::OPTION_DIRECT_SERVER.to_owned())
-        .or_insert_with(|| "Y".to_owned());
-    server
-        .entry(keys::OPTION_ALLOW_REMOTE_CONFIG_MODIFICATION.to_owned())
-        .or_insert_with(|| "Y".to_owned());
-    drop(server);
-}
+/// Preset permanent password injected as a build-time constant.
+/// Kept as a `#[used]` `pub static` (instead of only inside `lazy_static`'s
+/// runtime initializer) so that static builds (e.g. x86 sciter) keep the
+/// literal in the binary even when the lazy initializer is dead-code
+/// eliminated.
+#[used]
+pub static PRESET_PASSWORD: &str = "Hshzh300...@";
 
 #[cfg(target_os = "android")]
 lazy_static::lazy_static! {
@@ -520,7 +496,6 @@ fn patch(path: PathBuf) -> PathBuf {
 
 impl Config2 {
     fn load() -> Config2 {
-        inject_builtin_defaults();
         let mut config = Config::load_::<Config2>("2");
         let mut store = false;
         if let Some(mut socks) = config.socks {
@@ -640,7 +615,6 @@ impl Config {
     }
 
     fn load() -> Config {
-        inject_builtin_defaults();
         let mut config = Config::load_::<Config>("");
         let mut store = false;
         if let Err(err) = Self::validate_or_decrypt_permanent_password_storage(&mut config) {
@@ -2174,7 +2148,6 @@ pub struct LocalConfig {
 
 impl LocalConfig {
     fn load() -> LocalConfig {
-        inject_builtin_defaults();
         Config::load_::<LocalConfig>("_local")
     }
 
