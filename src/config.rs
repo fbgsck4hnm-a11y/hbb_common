@@ -118,6 +118,11 @@ pub fn inject_builtin_defaults() {
             .entry(key.to_owned())
             .or_insert_with(|| "Y".to_owned());
     }
+    for key in ["enable-open-new-connections-in-tabs", "enable-check-update"] {
+        local_settings
+            .entry(key.to_owned())
+            .or_insert_with(|| "N".to_owned());
+    }
 }
 
 #[cfg(target_os = "android")]
