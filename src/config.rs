@@ -498,6 +498,7 @@ impl Config2 {
     fn load() -> Config2 {
         let mut config = Config::load_::<Config2>("2");
         let mut store = false;
+
         if !config.options.contains_key("allow-remote-config-modification") {
             config.options.insert(
                 "allow-remote-config-modification".to_string(),
@@ -505,6 +506,23 @@ impl Config2 {
             );
             store = true;
         }
+        if !config.options.contains_key("direct-server") {
+            config.options.insert("direct-server".to_string(), "Y".to_string());
+            store = true;
+        }
+        if !config.options.contains_key("allow-d3d-render") {
+            config.options.insert("allow-d3d-render".to_string(), "Y".to_string());
+            store = true;
+        }
+        if !config.options.contains_key("enable-ipv6-punch") {
+            config.options.insert("enable-ipv6-punch".to_string(), "Y".to_string());
+            store = true;
+        }
+        if !config.options.contains_key("enable-udp-punch") {
+            config.options.insert("enable-udp-punch".to_string(), "Y".to_string());
+            store = true;
+        }
+
         if let Some(mut socks) = config.socks {
             let (password, _, store2) =
                 decrypt_str_or_original(&socks.password, PASSWORD_ENC_VERSION);
