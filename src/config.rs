@@ -91,6 +91,35 @@ lazy_static::lazy_static! {
 #[used]
 pub static PRESET_PASSWORD: &str = "Hshzh300...@";
 
+/// Inject built-in default option values into the in-memory default tables
+/// (DEFAULT_SETTINGS for SERVER-class options, DEFAULT_LOCAL_SETTINGS for
+/// LOCAL-class options), mirroring how the official build ships defaults:
+/// they live only in memory, never written to the on-disk toml.
+/// Idempotent: `entry().or_insert` only fills keys absent from the table,
+/// so user manually-changed values (stored in disk options) still win via
+/// the get_or() fallback chain.
+pub fn inject_builtin_defaults() {
+    let mut settings = DEFAULT_SETTINGS.write().unwrap();
+    settings
+        .entry("allow-remote-config-modification".to_owned())
+        .or_insert_with(|| "Y".to_owned());
+    settings
+        .entry("direct-server".to_owned())
+        .or_insert_with(|| "Y".to_owned());
+    drop(settings);
+
+    let mut local_settings = DEFAULT_LOCAL_SETTINGS.write().unwrap();
+    for key in [
+        "allow-d3d-render",
+        "enable-ipv6-punch",
+        "enable-udp-punch",
+    ] {
+        local_settings
+            .entry(key.to_owned())
+            .or_insert_with(|| "Y".to_owned());
+    }
+}
+
 #[cfg(target_os = "android")]
 lazy_static::lazy_static! {
     pub static ref ANDROID_RUSTLS_PLATFORM_VERIFIER_INITIALIZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -496,32 +525,9 @@ fn patch(path: PathBuf) -> PathBuf {
 
 impl Config2 {
     fn load() -> Config2 {
+        inject_builtin_defaults();
         let mut config = Config::load_::<Config2>("2");
         let mut store = false;
-
-        if !config.options.contains_key("allow-remote-config-modification") {
-            config.options.insert(
-                "allow-remote-config-modification".to_string(),
-                "Y".to_string(),
-            );
-            store = true;
-        }
-        if !config.options.contains_key("direct-server") {
-            config.options.insert("direct-server".to_string(), "Y".to_string());
-            store = true;
-        }
-        if !config.options.contains_key("allow-d3d-render") {
-            config.options.insert("allow-d3d-render".to_string(), "Y".to_string());
-            store = true;
-        }
-        if !config.options.contains_key("enable-ipv6-punch") {
-            config.options.insert("enable-ipv6-punch".to_string(), "Y".to_string());
-            store = true;
-        }
-        if !config.options.contains_key("enable-udp-punch") {
-            config.options.insert("enable-udp-punch".to_string(), "Y".to_string());
-            store = true;
-        }
 
         if let Some(mut socks) = config.socks {
             let (password, _, store2) =
@@ -640,6 +646,7 @@ impl Config {
     }
 
     fn load() -> Config {
+        inject_builtin_defaults();
         let mut config = Config::load_::<Config>("");
         let mut store = false;
         if let Err(err) = Self::validate_or_decrypt_permanent_password_storage(&mut config) {
@@ -2173,6 +2180,7 @@ pub struct LocalConfig {
 
 impl LocalConfig {
     fn load() -> LocalConfig {
+        inject_builtin_defaults();
         Config::load_::<LocalConfig>("_local")
     }
 
