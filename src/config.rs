@@ -118,9 +118,14 @@ pub fn inject_builtin_defaults() {
             .entry(key.to_owned())
             .or_insert_with(|| "Y".to_owned());
     }
-    local_settings
-        .entry("peer-card-ui-type".to_owned())
-        .or_insert_with(|| "1".to_owned());
+        local_settings
+           .entry("peer-card-ui-type".to_owned())
+           .or_insert_with(|| "1".to_owned());
+
+        local_settings
+           .entry("recent-sessions-style".to_owned())
+           .or_insert_with(|| "list".to_owned());
+
     for key in ["enable-open-new-connections-in-tabs", "enable-check-update"] {
         local_settings
             .entry(key.to_owned())
