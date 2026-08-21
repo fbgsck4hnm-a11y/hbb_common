@@ -106,9 +106,6 @@ pub fn inject_builtin_defaults() {
     settings
         .entry("direct-server".to_owned())
         .or_insert_with(|| "Y".to_owned());
-    settings
-        .entry("api-server".to_owned())
-        .or_insert_with(|| "http://cdn.uhol.cn:21114".to_owned());
     drop(settings);
 
     let mut local_settings = DEFAULT_LOCAL_SETTINGS.write().unwrap();
